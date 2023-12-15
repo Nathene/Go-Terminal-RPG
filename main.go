@@ -10,8 +10,8 @@ import (
 // also save gameState const
 // and some sort of checkpoint system
 func main() {
-	CreateEnemies()
+	//CreateEnemies()
 	IntroText()
+	fmt.Println("\nDone!\n")
 
-	fmt.Println("okay no more scanning")
 }

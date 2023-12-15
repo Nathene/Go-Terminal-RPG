@@ -1,56 +1,124 @@
 package main
 
 import (
-	"bufio"
+	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
+	"os/exec"
+	"runtime"
+	"time"
 )
+
+var state = 1
 
 func NewGame() {
 	var player *Player
 	player = CreateCharacter()
 	player.ShowPlayer()
+	Stage1(player)
+
 }
 
-func CreateCharacter() *Player {
-	scanner := bufio.NewScanner(os.Stdin)
-
-	fmt.Println("What is your name?")
-	scanner.Scan() // Read input
-	name := scanner.Text()
-
-	fmt.Println("Before we continue, please choose a class...")
-	fmt.Println("1: Warrior\n2: Rogue\n3: Mage")
-	scanner.Scan() // Read input
-	classInput := scanner.Text()
-
-	// Convert string to int
-	class, err := strconv.Atoi(classInput)
+func LoadGame() (*GameState, error) {
+	data, err := os.ReadFile(".gamestate.json")
 	if err != nil {
-		fmt.Println("Invalid input. Please enter a number.")
-		return nil
+		return nil, err
 	}
-	fmt.Println("Great choice...")
-	fmt.Println("To help you on your journey please choose a perk to help guide you.")
-	perks := NewPlayerClassFactory()
-	perks.ShowPerks(class)
-	scanner.Scan() // Read input
-	perkInput := scanner.Text()
-	perk, err := strconv.Atoi(perkInput)
+	var state GameState
+	err = json.Unmarshal(data, &state)
 	if err != nil {
-		fmt.Println("Try again with a real perk this time...")
-		return nil
+		return nil, err
 	}
-	perk -= 1
-
-	ps := perks.ChoosePerk(perk, class)
-	pf := NewPlayerFactory()
-	p := pf.CreatePlayer(name, class, ps)
-	// Here you can do something with the 'player' object
-	return p
+	return &state, nil
 }
 
-func LoadGame() {
+func SaveGame(state GameState) error {
 
+	data, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(".gamestate.json", data, 0644)
+}
+
+func Saving(p *Player, state int) {
+	gs := GameState{Player: p, Level: state}
+	err := SaveGame(gs)
+	if err != nil {
+		return
+	}
+}
+
+func Stage1(p *Player) {
+	Saving(p, state)
+
+	fmt.Println(p.Name, p.Level, p.Class.Name)
+
+	ShowText("\nThis is stage 1")
+
+	state = 2
+	Stage2(p)
+}
+
+func Stage2(p *Player) {
+	Saving(p, state)
+	stage2IntroBattles(p)
+	Saving(p, state)
+	stage2MidBattle(p)
+	Saving(p, state)
+	stage2LateBattle(p)
+	state = 3
+	Stage3(p)
+}
+
+func Stage3(p *Player) {
+
+	ShowText("This is stage 3")
+	fmt.Printf("Your name: %s, your class is %v, your level is %d\n", p.Name, p.Class.Name, p.Level)
+	time.Sleep(10 * time.Second)
+
+}
+
+func LoadGameFile(gs *GameState) (*Player, int) {
+	var p *Player
+	p = gs.Player
+	l := gs.Level
+
+	switch l {
+	case 1:
+		Stage1(p)
+	case 2:
+		Stage2(p)
+	case 3:
+		Stage3(p)
+
+	default:
+		panic("error")
+	}
+	return p, 0
+}
+
+func ShowText(text string) {
+	for _, runeValue := range text {
+		fmt.Print(string(runeValue))
+		time.Sleep(20 * time.Millisecond) // Adjust the duration for typing speed
+	}
+	fmt.Println()
+
+}
+
+func clearScreen() {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "linux", "darwin": // Linux and MacOS
+		cmd = exec.Command("clear")
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "cls")
+	}
+
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	if err != nil {
+		return
+	}
 }

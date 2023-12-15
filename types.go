@@ -1,9 +1,5 @@
 package main
 
-//type Battle interface {
-//	fight()
-//}
-
 type Stats struct {
 	STR int
 	INT int
@@ -11,30 +7,48 @@ type Stats struct {
 }
 
 type Spells struct {
-	name        string
-	description string
-	potency     int
-	uses        int
+	Element     string
+	Name        string
+	Description string
+	Potency     int
+	Uses        int
 }
 
 type Class struct {
-	classPerk []string
+	Name      string
+	ClassPerk []string
 }
 
 type Enemy struct {
-	hp     int
-	level  int
-	name   string
-	race   string
-	stats  Stats
-	spells Spells
+	Hp     Hp
+	Level  int
+	Name   string
+	Race   string
+	Stats  Stats
+	Spells Spells
+}
+
+type Hp struct {
+	curr int
+	max  int
 }
 
 type Player struct {
-	hp     int
-	level  int
-	name   string
-	class  Class
-	stats  Stats
-	spells Spells
+	Hp     Hp
+	Level  int
+	exp    int
+	Name   string
+	Class  Class
+	Stats  Stats
+	Spells []Spells
+	Check  Checkpoint
+}
+
+type Checkpoint struct {
+	Stage int
+}
+
+type GameState struct {
+	Player *Player
+	Level  int
 }
